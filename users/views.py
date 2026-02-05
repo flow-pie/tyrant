@@ -8,7 +8,9 @@ from .serializers import (
     LoginSerializer,
     AdminVerificationSerializer,
     PasswordResetRequestSerializer,
-    PasswordResetConfirmSerializer
+    PasswordResetConfirmSerializer,
+    LandlordDashboardSerializer,
+    LandlordDocumentUploadSerializer  
 )
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -165,10 +167,10 @@ def admin_reject_user(request, user_id):
 @permission_classes([IsAuthenticated, IsVerifiedLandlord])
 def landlord_dashboard(request):
     user = request.user
-    data = UserSerializer(user).data  # includes all personal info, docs, bank details
+    serializer = LandlordDashboardSerializer(user)
     return Response({
         "message": f"Welcome to your landlord dashboard, {user.full_name or user.username}",
-        "profile": data
+        "profile": serializer.data
     })
 
 @api_view(['GET'])
@@ -176,6 +178,24 @@ def landlord_dashboard(request):
 def tenant_dashboard(request):
     user = request.user
     return Response({"message": f"Welcome to your tenant dashboard, {user.full_name or user.username}"})
+
+# =====================================================================
+# LANDLORD DOCUMENT UPLOAD
+# =====================================================================
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsVerifiedLandlord])
+def upload_landlord_documents(request):
+    # Check if the landlord has provided at least the national_id_image
+    if 'national_id_image' not in request.FILES:
+        return Response({"error": "You must upload at least your National ID image."}, status=400)
+
+    serializer = LandlordDocumentUploadSerializer(
+        request.user, data=request.data, partial=True
+    )
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"success": "Documents uploaded successfully."})
+    return Response(serializer.errors, status=400)
 
 # =====================================================================
 # EXTRA ADMIN FEATURES

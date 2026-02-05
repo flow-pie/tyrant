@@ -1,10 +1,14 @@
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+
 from .views import (
     RegisterView, CustomLoginView, UserListView,
     user_profile, update_user_profile,
     admin_list_users, admin_list_pending_users,
     admin_verify_user, admin_reject_user,
     landlord_dashboard, tenant_dashboard,
+    upload_landlord_documents,  
     admin_promote_user, admin_demote_user,
     admin_suspend_user, admin_unsuspend_user,
     admin_dashboard_analytics,
@@ -32,8 +36,9 @@ urlpatterns = [
     # Landlord & Tenant
     path('landlord/dashboard/', landlord_dashboard, name='landlord-dashboard'),
     path('tenant/dashboard/', tenant_dashboard, name='tenant-dashboard'),
+    path('landlord/documents/upload/', upload_landlord_documents, name='landlord-documents-upload'),  # <-- added
 
     # Password Reset
     path('password-reset/request/', request_password_reset, name='password-reset-request'),
     path('password-reset/confirm/', confirm_password_reset, name='password-reset-confirm'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
