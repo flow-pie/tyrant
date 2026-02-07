@@ -37,9 +37,9 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')
-        role = validated_data.get('role')
+        role = validated_data.get('role') or User.ROLE_TENANT #Default role is tenant
 
-        if role == 'LANDLORD':
+        if role == User.ROLE_LANDLORD:
             if not validated_data.get('national_id') or not validated_data.get('national_id_image_url'):
                 raise serializers.ValidationError(
                     {"error": "Landlords must provide both National ID and ID image."}
