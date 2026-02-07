@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.conf import settings
+from django.urls import reverse  # added for get_absolute_url
 
 User = settings.AUTH_USER_MODEL
 
@@ -35,7 +36,6 @@ class Apartment(models.Model):
     rules_and_policies = models.TextField(blank=True)
     amenities = models.ManyToManyField(Amenity, blank=True, related_name="apartments")
 
-    
     verification_status = models.CharField(max_length=20, default="PENDING")
     verification_notes = models.TextField(blank=True)
 
@@ -58,6 +58,10 @@ class Apartment(models.Model):
         self.total_units = total
         self.occupied_units = occupied
         self.save(update_fields=["total_units", "occupied_units", "updated_at"])
+
+    # ✅ Added for sitemap
+    def get_absolute_url(self):
+        return reverse("properties:apartment_detail", args=[str(self.id)])
 
 
 class Unit(models.Model):
@@ -83,3 +87,7 @@ class Unit(models.Model):
 
     def __str__(self):
         return f"{self.apartment.name} - {self.unit_number_or_id} ({self.status})"
+
+    # ✅ Added for sitemap
+    def get_absolute_url(self):
+        return reverse("properties:unit_detail", args=[str(self.id)])
