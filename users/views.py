@@ -28,22 +28,41 @@ class RegisterView(generics.CreateAPIView):
 
     # AUTO-ASSIGN FIRST USER AS ADMIN
     def perform_create(self, serializer):
-        user = serializer.save()
-        if User.objects.count() == 1:  # first user
-            user.role = User.ROLE_ADMIN
-            user.verification_status = User.VERIF_VERIFIED
-            user.save()
+        import traceback
+        try:
+            user = serializer.save()
+            print(f"[DEBUG] User {user.username} created successfully.")
 
-        # generate email OTP
-        user.email_otp = f"{random.randint(100000, 999999)}"
-        user.otp_expiry = timezone.now() + timezone.timedelta(minutes=10)
-        user.save()
-        send_mail(
-            'Verify your email',
-            f'Your OTP is: {user.email_otp}',
-            'no-reply@example.com',
-            [user.email]
-        )
+            if User.objects.count() == 1:  # first user
+                user.role = User.ROLE_ADMIN
+                user.verification_status = User.VERIF_VERIFIED
+                user.save()
+                print(f"[DEBUG] First user set as admin: {user.username}")
+
+            # generate email OTP
+            user.email_otp = f"{random.randint(100000, 999999)}"
+            user.otp_expiry = timezone.now() + timezone.timedelta(minutes=10)
+            user.save()
+            print(f"[DEBUG] OTP generated: {user.email_otp}")
+
+            # Send email (might fail silently, so catch exception)
+            try:
+                send_mail(
+                    'Verify your email',
+                    f'Your OTP is: {user.email_otp}',
+                    'no-reply@example.com',
+                    [user.email]
+                )
+                print(f"[DEBUG] OTP email sent to {user.email}")
+            except Exception as email_err:
+                print("[ERROR] Failed to send OTP email:", email_err)
+                traceback.print_exc()
+
+        except Exception as e:
+            print("[ERROR] RegisterView perform_create crashed:", e)
+            traceback.print_exc()
+            raise
+
 
 # ----------------------------------------------------
 # LIST ALL USERS (ADMIN ONLY)
