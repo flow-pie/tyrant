@@ -9,11 +9,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'full_name', 'email', 'phone_number', 'national_id',
-            'national_id_image_url', 'profile_picture_url', 'bio', 'role', 'status',
+            'national_id_image', 'profile_picture', 'bio', 'role', 'status',
             'verification_status', 'verification_notes', 'verification_date',
             'verified_by_admin', 'created_at', 'updated_at',
             # new fields for landlord dashboard
-            'physical_address', 'proof_of_ownership_url', 'kra_pin_url',
+            'physical_address', 'proof_of_ownership', 'kra_pin',
             'bank_name', 'bank_account_number', 'bank_account_name', 'bank_branch_code',
             'terms_accepted'
         ]
@@ -99,3 +99,30 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     otp = serializers.CharField(max_length=6, required=True)
     new_password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+
+# --- New serializer for landlord dashboard ---
+class LandlordDashboardSerializer(UserSerializer):
+    verified_by_admin = serializers.SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields
+
+    def get_verified_by_admin(self, obj):
+        if obj.verified_by_admin:
+            return obj.verified_by_admin.full_name or obj.verified_by_admin.email
+        return None
+
+
+# --- Landlord document upload ---
+class LandlordDocumentUploadSerializer(serializers.ModelSerializer):
+    national_id_image = serializers.ImageField(required=True)
+    proof_of_ownership = serializers.ImageField(required=False)
+    kra_pin = serializers.ImageField(required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            'national_id_image',
+            'proof_of_ownership',
+            'kra_pin'
+        ]
