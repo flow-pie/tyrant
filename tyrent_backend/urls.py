@@ -17,9 +17,12 @@ urlpatterns = [
     path('api/tenant/', include('users.urls_tenant')),
 
 
-    path('properties/', include('properties.urls')),
-    path('wallet/', include('wallet.urls')),
-    path('bookings/', include('bookings.urls')),
 
-    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+    path('api/properties/', include('properties.urls')),
+    path('api/units/', include('properties.urls')),
+    path('api/apartments/', include('properties.urls')),
+    path('api/wallet/', include('wallet.urls')),
+    path('api/bookings/', include('bookings.urls')),
+
+    path('api/sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
 ]
