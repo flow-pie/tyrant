@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "bookings",
     "wallet",
     "verification",
+    "drf_spectacular",
 ]
 
 SITE_ID = 1
@@ -166,7 +167,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'
 }
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Tyrent API",
+    "DESCRIPTION": "API documentation for Tyrent backend",
+    "VERSION": "1.0.0",
+}
+
 
 # -------------------------
 # EMAIL CONFIGURATION (CONSOLE BACKEND)

@@ -61,8 +61,7 @@ class Apartment(models.Model):
 
     # ✅ Added for sitemap
     def get_absolute_url(self):
-        return reverse("properties:apartment_detail", args=[str(self.id)])
-
+        return reverse("properties:apartment-detail", args=[str(self.id)])
 
 class Unit(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -90,4 +89,4 @@ class Unit(models.Model):
 
     # ✅ Added for sitemap
     def get_absolute_url(self):
-        return reverse("properties:unit_detail", args=[str(self.id)])
+        return reverse("properties:unit-detail", args=[str(self.id)])
