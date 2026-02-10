@@ -27,7 +27,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'username', 'email', 'password', 'password2', 'full_name',
-            'phone_number', 'role', 'national_id', 'national_id_image_url'
+            'phone_number', 'role', 'national_id', 'national_id_image'
         ]
 
     def validate(self, attrs):
@@ -40,7 +40,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         role = validated_data.get('role')
 
         if role == 'LANDLORD':
-            if not validated_data.get('national_id') or not validated_data.get('national_id_image_url'):
+            if not validated_data.get('national_id') or not validated_data.get('national_id_image'):
                 raise serializers.ValidationError(
                     {"error": "Landlords must provide both National ID and ID image."}
                 )
@@ -51,7 +51,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             full_name=validated_data.get('full_name', ''),
             phone_number=validated_data['phone_number'],
             national_id=validated_data.get('national_id'),
-            national_id_image_url=validated_data.get('national_id_image_url'),
+            national_id_image=validated_data.get('national_id_image'),
             role=role,
         )
         user.set_password(validated_data['password'])
