@@ -12,6 +12,12 @@ OCCUPANCY_STATUS_CHOICES = [
     ("MAINTENANCE", "Maintenance"),
 ]
 
+class VerificationStatus(models.TextChoices):
+    NOT_REQUESTED = "NOT_REQUESTED", "Not Requested"
+    PENDING = "PENDING", "Pending"
+    VERIFIED = "VERIFIED", "Verified"
+    REJECTED = "REJECTED", "Rejected"
+
 
 class Amenity(models.Model):
     """Lookup table for amenities."""
@@ -36,8 +42,12 @@ class Apartment(models.Model):
     rules_and_policies = models.TextField(blank=True)
     amenities = models.ManyToManyField(Amenity, blank=True, related_name="apartments")
 
-    verification_status = models.CharField(max_length=20, default="PENDING")
-    verification_notes = models.TextField(blank=True)
+    verification_status = models.CharField(
+        max_length = 20,
+        choices = VerificationStatus.choices,
+        default = VerificationStatus.NOT_REQUESTED,
+        db_index = True,
+    )
 
     total_units = models.PositiveIntegerField(default=0)
     occupied_units = models.PositiveIntegerField(default=0)
@@ -47,6 +57,10 @@ class Apartment(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["verification_status"]),
+            models.Index(fields=["landlord"]),
+        ]
 
     def __str__(self):
         return self.name
