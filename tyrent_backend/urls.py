@@ -7,6 +7,8 @@ from drf_spectacular.views import (
     SpectacularSwaggerView
 )
 
+from users.urls_auth import urlpatterns
+
 sitemaps = {
     'apartments': ApartmentSitemap,
     'units': UnitSitemap,
