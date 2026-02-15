@@ -12,7 +12,8 @@ from .views import (
     admin_promote_user, admin_demote_user,
     admin_suspend_user, admin_unsuspend_user,
     admin_dashboard_analytics,
-    request_password_reset, confirm_password_reset
+    request_password_reset, confirm_password_reset,
+    verify_email, resend_otp, verify_status
 )
 
 urlpatterns = [
@@ -21,6 +22,11 @@ urlpatterns = [
     path('list/', UserListView.as_view(), name='user-list'),
     path('profile/', user_profile, name='user-profile'),
     path('update/', update_user_profile, name='update-user-profile'),
+
+    #Email Verification
+    path('verify-email/', verify_email, name='verify-email'),
+    path('resend-otp/', resend_otp, name='resend-otp'),
+    path('verify-status/', verify_status, name='verify-status'),
 
     # Admin routes
     path('admin/list/', admin_list_users, name='admin-list-users'),
@@ -36,7 +42,7 @@ urlpatterns = [
     # Landlord & Tenant
     path('landlord/dashboard/', landlord_dashboard, name='landlord-dashboard'),
     path('tenant/dashboard/', tenant_dashboard, name='tenant-dashboard'),
-    path('landlord/documents/upload/', upload_landlord_documents, name='landlord-documents-upload'),  # <-- added
+    path('landlord/documents/upload/', upload_landlord_documents, name='landlord-documents-upload'),
 
     # Password Reset
     path('password-reset/request/', request_password_reset, name='password-reset-request'),
