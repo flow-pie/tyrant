@@ -54,6 +54,7 @@ class Apartment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_approved = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-created_at"]
@@ -76,6 +77,12 @@ class Apartment(models.Model):
     # ✅ Added for sitemap
     def get_absolute_url(self):
         return reverse("properties:apartment-detail", args=[str(self.id)])
+
+    def approve(self):
+        if self.verification_status != VerificationStatus.VERIFIED:
+            raise ValueError("Apartment must be verified before approval.")
+        self.is_approved = True
+        self.save(update_fields=["is_approved"])
 
 class Unit(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

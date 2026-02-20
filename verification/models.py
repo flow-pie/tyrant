@@ -48,6 +48,17 @@ class Verification(models.Model):
             models.Index(fields= ["assigned_agent"]),
             models.Index(fields = ["apartment"]),
         ]
+        models.UniqueConstraint(
+            fields=["apartment"],
+            condition= models.Q(
+                status__in = [
+                    "PENDING",
+                    "ASSIGNED",
+                    "IN_PROGRESS",
+                ]
+            ),
+            name="unique_active_verification_per_apartment",
+        )
 
     def __str__(self):
         return f"Verification #{self.id} - {self.apartment}"
@@ -65,7 +76,44 @@ class Verification(models.Model):
         self.apartment.save(update_fields = ["verification_status"])
         self.save()
 
+    def can_transition(self, new_status):
+        allowed_transitions = {
+            self.Status.PENDING: [self.Status.ASSIGNED],
+            self.Status.ASSIGNED : [self.Status.IN_PROGRESS],
+            self.Status.IN_PROGRESS : [
+                self.Status.VERIFIED,
+                self.Status.REJECTED,
+            ],
+            self.Status.VERIFIED : [],
+            self.Status.REJECTED : [],
 
+        }
+        return new_status in allowed_transitions.get(self.status, [])
+
+    def update_apartment_status(self):
+        apartment = self.apartment
+
+        if(self.status == self.Status.VERIFIED):
+            apartment.verification_status = "VERIFIED"
+        elif(self.status == self.Status.REJECTED):
+            apartment.verification_status = "REJECTED"
+        else:
+            apartment.verification_status = "PENDING"
+
+        apartment.save(update_fields = ["verification_status"])
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old = Verification.objects.get(pk=self.pk)
+            if old.status != self.status:
+
+                self.update_apartment_status()
+
+                if not old.can_transition(self.status):
+                    raise ValueError(
+                        f"Invalid transition from {old.status} to {self.status}"
+                    )
+        super().save(*args, **kwargs)
 
 #Verification images
 class VerificationImage(models.Model):

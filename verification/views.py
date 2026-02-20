@@ -38,6 +38,13 @@ class VerificationViewSet(viewsets.ModelViewSet):
         if verification.status == 'COMPLETED':
             return Response({"detail": "Report already submitted."}, status=400)
 
+        #Enforce agent ownership
+        if verification.assigned_agent != request.user:
+            return Response(
+                {"detail": "You are not assigned to this task."},
+                status = 403
+            )
+
         serializer = SubmitReportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -65,7 +72,6 @@ class VerificationViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        # Fix: use self.request.user
         if not self.request.user.is_admin:
             raise PermissionDenied("Only admins can modify verification records.")
         serializer.save()
