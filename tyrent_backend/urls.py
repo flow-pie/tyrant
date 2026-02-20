@@ -35,5 +35,7 @@ urlpatterns = [
     path('api/wallet/', include('wallet.urls')),
     path('api/bookings/', include('bookings.urls')),
 
+    path("api/", include("verification.urls")),
+
     path('api/sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
 ]
