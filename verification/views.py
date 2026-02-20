@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -14,34 +15,31 @@ from .serializers import (
 
 from .permissions import IsAdminOrAssignedAgent
 
-class VerificationViewSet(viewsets.ModelViewSet):
-    queryset = Verification.objects.select_related(
-        "apartment",
-        "assigned_agent"
-    ).prefetch_related("images")
 
+class VerificationViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminOrAssignedAgent]
     serializer_class = VerificationSerializer
-    permission_class = [IsAdminOrAssignedAgent]
 
     def get_queryset(self):
+        qs = Verification.objects.select_related(
+            "apartment", "assigned_agent"
+        ).prefetch_related("images")
+
         user = self.request.user
+        if user.is_staff or getattr(user, 'is_admin', False):
+            return qs
+        return qs.filter(assigned_agent=user)
 
-        #admin sees all
-        if user.is_admin:
-            return self.queryset
-
-        #agent sees only assigned tasks
-        return self.queryset.filter(assigned_agent=user)
-
-    #submit report endpoint
-    @action(detail=True, methods=["post"],url_path="submit-report")
-    def submit_report(self,request, pk=None):
-
+    @action(detail=True, methods=["post"], url_path="submit-report")
+    def submit_report(self, request, pk=None):
         verification = self.get_object()
 
-        serializer = SubmitReportSerializer(data=request.data)
-        serializer.is_valid(raise_exception = True)
+        #Prevent re-submission
+        if verification.status == 'COMPLETED':
+            return Response({"detail": "Report already submitted."}, status=400)
 
+        serializer = SubmitReportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
         with transaction.atomic():
@@ -50,26 +48,24 @@ class VerificationViewSet(viewsets.ModelViewSet):
             verification.verification_date = timezone.now()
             verification.save()
 
-            #update apartment status
             apartment = verification.apartment
             apartment.verification_status = data["status"]
-            apartment.save(update_fields = ["verification_status"])
+            apartment.save(update_fields=["verification_status"])
 
-            #save images
-            for image in data.get("images", []):
-                VerificationImage.objects.create(
-                    verification = verification,
-                    image = image
-                )
+            # Bulk create images
+            images_to_create = [
+                VerificationImage(verification=verification, image=img)
+                for img in data.get("images", [])
+            ]
+            VerificationImage.objects.bulk_create(images_to_create)
 
-            return Response(
-                {"detail": "Verification report submitted successfully."},
-                status = status.HTTP_200_OK
-            )
-        
-    #report retrieval endpoint
-    @action(detail = True, methods = ["get"], url_path="report")
-    def get_report(self, request, pk=None):
-        verification = self.get_object()
-        serializer = self.get_serializer(verification)
-        return Response(serializer.data)
+        return Response(
+            {"detail": "Verification report submitted successfully."},
+            status=status.HTTP_200_OK
+        )
+
+    def perform_update(self, serializer):
+        # Fix: use self.request.user
+        if not self.request.user.is_admin:
+            raise PermissionDenied("Only admins can modify verification records.")
+        serializer.save()
