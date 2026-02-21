@@ -44,21 +44,23 @@ class Verification(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields = ["status"]),
-            models.Index(fields= ["assigned_agent"]),
-            models.Index(fields = ["apartment"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["assigned_agent"]),
+            models.Index(fields=["apartment"]),
         ]
-        models.UniqueConstraint(
-            fields=["apartment"],
-            condition= models.Q(
-                status__in = [
-                    "PENDING",
-                    "ASSIGNED",
-                    "IN_PROGRESS",
-                ]
-            ),
-            name="unique_active_verification_per_apartment",
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=["apartment"],
+                condition=models.Q(
+                    status__in=[
+                        "PENDING",
+                        "ASSIGNED",
+                        "IN_PROGRESS",
+                    ]
+                ),
+                name="unique_active_verification_per_apartment",
+            )
+        ]
 
     def __str__(self):
         return f"Verification #{self.id} - {self.apartment}"
